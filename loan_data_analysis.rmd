@@ -1,0 +1,19 @@
+# Project 4: Exploratory Data Analysis
+## Explore and Summarise Data
+#### Data Analyst Nanodegree (Udacity)
+Project submission by Edward Minnett (ed@methodic.io).
+
+XXXX Xth 2016. (Revision X)
+
+-------
+
+## Eploratory Analysis
+
+```{r}
+data = read.csv('prosperLoanData.csv')
+summary(data)
+```
+
+## Final Plots and Summary
+
+## Reflections

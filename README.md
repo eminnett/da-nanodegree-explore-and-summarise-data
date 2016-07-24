@@ -13,6 +13,10 @@ This project requires **R** and and has been produced using RStudio though the
 project could be reproduced using the command line interface.
 
 
+### Describe the project
+
+TODO: Describe the project...
+
 ### Data
 
 The Prosper Loan Data can be downloaded [here](https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/prosperLoanData.csv&sa=D&ust=1469382679578000&usg=AFQjCNF1NVrWBD4Wxp42rd07IHa3w9zpGQ).
@@ -100,7 +104,3 @@ Data variables and descriptions:
 - **InvestmentFromFriendsCount**: Number of friends that made an investment in the loan.
 - **InvestmentFromFriendsAmount**: Dollar amount of investments that were made by friends.
 - **Investors**: The number of investors that funded the loan.
-
-### Describe the project
-
-TODO: Describe the project...

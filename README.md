@@ -7,11 +7,21 @@ XXXX Xth 2016. (Revision X)
 
 -------
 
-### Install
+### Setup
 
-This project requires **R** and and has been produced using RStudio though the
-project could be reproduced using the command line interface.
+This project requires **R** and and has been produced using the R CLI.
 
+Steps to re-knit the R Markdown back into HTML:
+
+```{bash}
+$ cd project
+$ curl https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/prosperLoanData.csv&sa=D&ust=1469382679578000&usg=AFQjCNF1NVrWBD4Wxp42rd07IHa3w9zpGQ
+$ R
+R > $ install.packages('knitr')
+R > $ library(knitr)
+R > $ render_html()
+R > $ knit('loan_data_analysis.rmd', 'loan_data_analysis.html')
+```
 
 ### Describe the project
 

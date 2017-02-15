@@ -3,7 +3,7 @@
 #### Data Analyst Nanodegree (Udacity)
 Project submission by Edward Minnett (ed@methodic.io).
 
-XXXX Xth 2016. (Revision X)
+February 15th 2017 (Revision 1)
 
 -------
 
@@ -13,104 +13,127 @@ This project requires **R** and and has been produced using the R CLI.
 
 Steps to re-knit the R Markdown back into HTML:
 
+It is worth noting that PanDoc is required for RMarkdown to render into HTML.
+
 ```{bash}
 $ cd project
-$ curl https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/prosperLoanData.csv&sa=D&ust=1469382679578000&usg=AFQjCNF1NVrWBD4Wxp42rd07IHa3w9zpGQ
+$ curl https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityReds.csv&sa=D&ust=1485155974214000&usg=AFQjCNG9DNbOX3RzOHAjxTnKktwfEVWKJg  >> wineQualityReds.csv
+$ curl https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityWhites.csv&sa=D&ust=1485155974218000&usg=AFQjCNEThSffXYL8712q5J4nf1AlIdTakQ  >> wineQualityWhites.csv
 $ R
-R > $ install.packages('knitr')
-R > $ library(knitr)
-R > $ render_html()
-R > $ knit('loan_data_analysis.rmd', 'loan_data_analysis.html')
+R > $ install.packages('rmarkdown')
+R > $ install.packages('corrplot')
+R > $ library(rmarkdown)
+R > $ rmarkdown::render("wine_data_analysis.rmd")
 ```
 
 ### Describe the project
 
-TODO: Describe the project...
+The purpose of this project is to use R and markdown to develop a 'stream of consciousness' data exploration that progresses through univariate, bivariate, multivariate and final data explorations. The combined R and markdown is then knit into a rendered HTML document that constitutes the final report.
 
 ### Data
 
-The Prosper Loan Data can be downloaded [here](https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/prosperLoanData.csv&sa=D&ust=1469382679578000&usg=AFQjCNF1NVrWBD4Wxp42rd07IHa3w9zpGQ).
+The wine quality data can be downloaded [here](https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityReds.csv&sa=D&ust=1485155974214000&usg=AFQjCNG9DNbOX3RzOHAjxTnKktwfEVWKJg)
+and [here](https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityWhites.csv&sa=D&ust=1485155974218000&usg=AFQjCNEThSffXYL8712q5J4nf1AlIdTakQ).
+Both the red wine and white wine data are needed for this project.
 
-Data variables and descriptions:
+The data as described by the authors of the dataset:
 
-- **ListingKey**: Unique key for each listing, same value as the 'key' used in the listing object in the API.
-- **ListingNumber**: The number that uniquely identifies the listing to the public as displayed on the website.
-- **ListingCreationDate**: The date the listing was created.
-- **CreditGrade**: The Credit rating that was assigned at the time the listing went live. Applicable for listings pre-2009 period and will only be populated for those listings.
-- **Term**: The length of the loan expressed in months.
-- **LoanStatus**: The current status of the loan: Cancelled, Chargedoff, Completed, Current, Defaulted, FinalPaymentInProgress, PastDue. The PastDue status will be accompanied by a delinquency bucket.
-- **ClosedDate**: Closed date is applicable for Cancelled- $1Completed, Chargedoff and Defaulted loan statuses.
-- **BorrowerAPR**: The Borrower's Annual Percentage Rate (APR) for the loan.
-- **BorrowerRate**: The Borrower's interest rate for this loan.
-- **LenderYield**: The Lender yield on the loan. Lender yield is equal to the interest rate on the loan less the servicing fee.
-- **EstimatedEffectiveYield**: Effective yield is equal to the borrower interest rate (i) minus the servicing fee rate, (ii) minus estimated uncollected interest on charge-offs, (iii) plus estimated collected late fees. Applicable for loans originated after July 2009.
-- **EstimatedLoss**: Estimated loss is the estimated principal loss on charge-offs. Applicable for loans originated after July 2009.
-- **EstimatedReturn**: The estimated return assigned to the listing at the time it was created. Estimated return is the difference between the Estimated Effective Yield and the Estimated Loss Rate. Applicable for loans originated after July 2009.
-- ProsperRating (numeric): The Prosper Rating assigned at the time the listing was created: 0 - N/A, 1 - HR, 2 - E, 3 - D, 4 - C, 5 - B, 6 - A, 7 - AA. Applicable for loans originated after July 2009.
-- ProsperRating (Alpha): The Prosper Rating assigned at the time the listing was created between AA - HR. Applicable for loans originated after July 2009.
-- **ProsperScore**: A custom risk score built using historical Prosper data. The score ranges from 1-10, with 10 being the best, or lowest risk score. Applicable for loans originated after July 2009.
-- **ListingCategory**: The category of the listing that the borrower selected when posting their listing: 0 - Not Available, 1 - Debt Consolidation, 2 - Home Improvement, 3 - Business, 4 - Personal Loan, 5 - Student Use, 6 - Auto, 7- Other, 8 - Baby&Adoption, 9 - Boat, 10 - Cosmetic Procedure, 11 - Engagement Ring, 12 - Green Loans, 13 - Household Expenses, 14 - Large Purchases, 15 - Medical/Dental, 16 - Motorcycle, 17 - RV, 18 - Taxes, 19 - Vacation, 20 - Wedding Loans
-- **BorrowerState**: The two letter abbreviation of the state of the address of the borrower at the time the Listing was created.
-- **Occupation**: The Occupation selected by the Borrower at the time they created the listing.
-- **EmploymentStatus**: The employment status of the borrower at the time they posted the listing.
-- **EmploymentStatusDuration**: The length in months of the employment status at the time the listing was created.
-- **IsBorrowerHomeowner**: A Borrower will be classified as a homowner if they have a mortgage on their credit profile or provide documentation confirming they are a homeowner.
-- **CurrentlyInGroup**: Specifies whether or not the Borrower was in a group at the time the listing was created.
-- **GroupKey**: The Key of the group in which the Borrower is a member of. Value will be null if the borrower does not have a group affiliation.
-- **DateCreditPulled**: The date the credit profile was pulled.
-- **CreditScoreRangeLower**: The lower value representing the range of the borrower's credit score as provided by a consumer credit rating agency.
-- **CreditScoreRangeUpper**: The upper value representing the range of the borrower's credit score as provided by a consumer credit rating agency.
-- **FirstRecordedCreditLine**: The date the first credit line was opened.
-- **CurrentCreditLines**: Number of current credit lines at the time the credit profile was pulled.
-- **OpenCreditLines**: Number of open credit lines at the time the credit profile was pulled.
-- **TotalCreditLinespast7years**: Number of credit lines in the past seven years at the time the credit profile was pulled.
-- **OpenRevolvingAccounts**: Number of open revolving accounts at the time the credit profile was pulled.
-- **OpenRevolvingMonthlyPayment**: Monthly payment on revolving accounts at the time the credit profile was pulled.
-- **InquiriesLast6Months**: Number of inquiries in the past six months at the time the credit profile was pulled.
-- **TotalInquiries**: Total number of inquiries at the time the credit profile was pulled.
-- **CurrentDelinquencies**: Number of accounts delinquent at the time the credit profile was pulled.
-- **AmountDelinquent**: Dollars delinquent at the time the credit profile was pulled.
-- **DelinquenciesLast7Years**: Number of delinquencies in the past 7 years at the time the credit profile was pulled.
-- **PublicRecordsLast10Years**: Number of public records in the past 10 years at the time the credit profile was pulled.
-- **PublicRecordsLast12Months**: Number of public records in the past 12 months at the time the credit profile was pulled.
-- **RevolvingCreditBalance**: Dollars of revolving credit at the time the credit profile was pulled.
-- **BankcardUtilization**: The percentage of available revolving credit that is utilized at the time the credit profile was pulled.
-- **AvailableBankcardCredit**: The total available credit via bank card at the time the credit profile was pulled.
-- **TotalTrades**: Number of trade lines ever opened at the time the credit profile was pulled.
-- **TradesNeverDelinquent**: Number of trades that have never been delinquent at the time the credit profile was pulled.
-- **TradesOpenedLast6Months**: Number of trades opened in the last 6 months at the time the credit profile was pulled.
-- **DebtToIncomeRatio**: The debt to income ratio of the borrower at the time the credit profile was pulled. This value is Null if the debt to income ratio is not available. This value is capped at 10.01 (any debt to income ratio larger than 1000% will be returned as 1001%).
-- **IncomeRange**: The income range of the borrower at the time the listing was created.
-- **IncomeVerifiable**: The borrower indicated they have the required documentation to support their income.
-- **StatedMonthlyIncome**: The monthly income the borrower stated at the time the listing was created.
-- **LoanKey**: Unique key for each loan. This is the same key that is used in the API.
-- **TotalProsperLoans**: Number of Prosper loans the borrower at the time they created this listing. This value will be null if the borrower had no prior loans.
-- **TotalProsperPaymentsBilled**: Number of on time payments the borrower made on Prosper loans at the time they created this listing. This value will be null if the borrower had no prior loans.
-- **OnTimeProsperPayments**: Number of on time payments the borrower had made on Prosper loans at the time they created this listing. This value will be null if the borrower has no prior loans.
-- **ProsperPaymentsLessThanOneMonthLate**: Number of payments the borrower made on Prosper loans that were less than one month late at the time they created this listing. This value will be null if the borrower had no prior loans.
-- **ProsperPaymentsOneMonthPlusLate**: Number of payments the borrower made on Prosper loans that were greater than one month late at the time they created this listing. This value will be null if the borrower had no prior loans.
-- **ProsperPrincipalBorrowed**: Total principal borrowed on Prosper loans at the time the listing was created. This value will be null if the borrower had no prior loans.
-- **ProsperPrincipalOutstanding**: Principal outstanding on Prosper loans at the time the listing was created. This value will be null if the borrower had no prior loans.
-- **ScorexChangeAtTimeOfListing**: Borrower's credit score change at the time the credit profile was pulled. This will be the change relative to the borrower's last Prosper loan. This value will be null if the borrower had no prior loans.
-- **LoanCurrentDaysDelinquent**: The number of days delinquent.
-- **LoanFirstDefaultedCycleNumber**: The cycle the loan was charged off. If the loan has not charged off the value will be null.
-- **LoanMonthsSinceOrigination**: Number of months since the loan originated.
-- **LoanNumber**: Unique numeric value associated with the loan.
-- **LoanOriginalAmount**: The origination amount of the loan.
-- **LoanOriginationDate**: The date the loan was originated.
-- **LoanOriginationQuarter**: The quarter in which the loan was originated.
-- **MemberKey**: The unique key that is associated with the borrower. This is the same identifier that is used in the API member object.
-- **MonthlyLoanPayment**: The scheduled monthly loan payment.
-- **LP_CustomerPayments**: Pre charge-off cumulative gross payments made by the borrower on the loan. If the loan has charged off, this value will exclude any recoveries.
-- **LP_CustomerPrincipalPayments**: Pre charge-off cumulative principal payments made by the borrower on the loan. If the loan has charged off, this value will exclude any recoveries.
-- **LP_InterestandFees**: Pre charge-off cumulative interest and fees paid by the borrower. If the loan has charged off, this value will exclude any recoveries.
-- **LP_ServiceFees**: Cumulative service fees paid by the investors who have invested in the loan.
-- **LP_CollectionFees**: Cumulative collection fees paid by the investors who have invested in the loan.
-- **LP_GrossPrincipalLoss**: The gross charged off amount of the loan.
-- **LP_NetPrincipalLoss**: The principal that remains uncollected after any recoveries.
-- **LP_NonPrincipalRecoverypayments**: The interest and fee component of any recovery payments. The current payment policy applies payments in the following order: Fees, interest, principal.
-- **PercentFunded**: Percent the listing was funded.
-- **Recommendations**: Number of recommendations the borrower had at the time the listing was created.
-- **InvestmentFromFriendsCount**: Number of friends that made an investment in the loan.
-- **InvestmentFromFriendsAmount**: Dollar amount of investments that were made by friends.
-- **Investors**: The number of investors that funded the loan.
+Citation Request:
+  This dataset is public available for research. The details are described in [Cortez et al., 2009].
+  Please include this citation if you plan to use this database:
+
+  P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis.
+  Modeling wine preferences by data mining from physicochemical properties.
+  In Decision Support Systems, Elsevier, 47(4):547-553. ISSN: 0167-9236.
+
+  Available at: [@Elsevier] http://dx.doi.org/10.1016/j.dss.2009.05.016
+                [Pre-press (pdf)] http://www3.dsi.uminho.pt/pcortez/winequality09.pdf
+                [bib] http://www3.dsi.uminho.pt/pcortez/dss09.bib
+
+1. Title: Wine Quality
+
+2. Sources
+   Created by: Paulo Cortez (Univ. Minho), Antonio Cerdeira, Fernando Almeida, Telmo Matos and Jose Reis (CVRVV) @ 2009
+
+3. Past Usage:
+
+  P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis.
+  Modeling wine preferences by data mining from physicochemical properties.
+  In Decision Support Systems, Elsevier, 47(4):547-553. ISSN: 0167-9236.
+
+  In the above reference, two datasets were created, using red and white wine samples.
+  The inputs include objective tests (e.g. PH values) and the output is based on sensory data
+  (median of at least 3 evaluations made by wine experts). Each expert graded the wine quality
+  between 0 (very bad) and 10 (very excellent). Several data mining methods were applied to model
+  these datasets under a regression approach. The support vector machine model achieved the
+  best results. Several metrics were computed: MAD, confusion matrix for a fixed error tolerance (T),
+  etc. Also, we plot the relative importances of the input variables (as measured by a sensitivity
+  analysis procedure).
+
+4. Relevant Information:
+
+   The two datasets are related to red and white variants of the Portuguese "Vinho Verde" wine.
+   For more details, consult: http://www.vinhoverde.pt/en/ or the reference [Cortez et al., 2009].
+   Due to privacy and logistic issues, only physicochemical (inputs) and sensory (the output) variables
+   are available (e.g. there is no data about grape types, wine brand, wine selling price, etc.).
+
+   These datasets can be viewed as classification or regression tasks.
+   The classes are ordered and not balanced (e.g. there are munch more normal wines than
+   excellent or poor ones). Outlier detection algorithms could be used to detect the few excellent
+   or poor wines. Also, we are not sure if all input variables are relevant. So
+   it could be interesting to test feature selection methods.
+
+5. Number of Instances: red wine - 1599; white wine - 4898.
+
+6. Number of Attributes: 11 + output attribute
+
+   Note: several of the attributes may be correlated, thus it makes sense to apply some sort of
+   feature selection.
+
+7. Attribute information:
+
+   For more information, read [Cortez et al., 2009].
+
+   Input variables (based on physicochemical tests):
+   1 - fixed acidity (tartaric acid - g / dm^3)
+   2 - volatile acidity (acetic acid - g / dm^3)
+   3 - citric acid (g / dm^3)
+   4 - residual sugar (g / dm^3)
+   5 - chlorides (sodium chloride - g / dm^3
+   6 - free sulfur dioxide (mg / dm^3)
+   7 - total sulfur dioxide (mg / dm^3)
+   8 - density (g / cm^3)
+   9 - pH
+   10 - sulphates (potassium sulphate - g / dm3)
+   11 - alcohol (% by volume)
+   Output variable (based on sensory data):
+   12 - quality (score between 0 and 10)
+
+8. Missing Attribute Values: None
+
+9. Description of attributes:
+
+   1 - fixed acidity: most acids involved with wine or fixed or nonvolatile (do not evaporate readily)
+
+   2 - volatile acidity: the amount of acetic acid in wine, which at too high of levels can lead to an unpleasant, vinegar taste
+
+   3 - citric acid: found in small quantities, citric acid can add 'freshness' and flavor to wines
+
+   4 - residual sugar: the amount of sugar remaining after fermentation stops, it's rare to find wines with less than 1 gram/liter and wines with greater than 45 grams/liter are considered sweet
+
+   5 - chlorides: the amount of salt in the wine
+
+   6 - free sulfur dioxide: the free form of SO2 exists in equilibrium between molecular SO2 (as a dissolved gas) and bisulfite ion; it prevents microbial growth and the oxidation of wine
+
+   7 - total sulfur dioxide: amount of free and bound forms of S02; in low concentrations, SO2 is mostly undetectable in wine, but at free SO2 concentrations over 50 ppm, SO2 becomes evident in the nose and taste of wine
+
+   8 - density: the density of water is close to that of water depending on the percent alcohol and sugar content
+
+   9 - pH: describes how acidic or basic a wine is on a scale from 0 (very acidic) to 14 (very basic); most wines are between 3-4 on the pH scale
+
+   10 - sulphates: a wine additive which can contribute to sulfur dioxide gas (S02) levels, wich acts as an antimicrobial and antioxidant
+
+   11 - alcohol: the percent alcohol content of the wine
+
+   Output variable (based on sensory data):
+   12 - quality (score between 0 and 10)

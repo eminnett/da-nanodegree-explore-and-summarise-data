@@ -71,9 +71,11 @@ P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis.
 Modeling wine preferences by data mining from physicochemical properties.
 In Decision Support Systems, Elsevier, 47(4):547-553. ISSN: 0167-9236.
 
-Available at: [@Elsevier] http://dx.doi.org/10.1016/j.dss.2009.05.016
-              [Pre-press (pdf)] http://www3.dsi.uminho.pt/pcortez/winequality09.pdf
-              [bib] http://www3.dsi.uminho.pt/pcortez/dss09.bib
+Available at:
+
+- [@Elsevier] http://dx.doi.org/10.1016/j.dss.2009.05.016
+- [Pre-press (pdf)] http://www3.dsi.uminho.pt/pcortez/winequality09.pdf
+- [bib] http://www3.dsi.uminho.pt/pcortez/dss09.bib
 
 A more detailed description of the data set can be found in the `README.md` file that accompanies this report.
 
@@ -412,14 +414,76 @@ The largest correlation scores with the quality of each of the types of wine are
 
 ### White Wines
 ```{r echo = FALSE}
-# Wrap the bivariate scatter plots in a function.
+# Return the given data frame without data that fall outside 2.5 times the IQR
+# from the mean (+/-) for the given feature. It returns the filtered data frame.
+filter_outliers_by_feature <- function(df, feature) {
+  series <- df[, feature]
+  iqr    <- IQR(series)
+  mean   <- mean(series)
+  lower_fence   <- mean - 2.5 * iqr
+  upper_fence   <- mean + 2.5 * iqr
+  filtered_data <- df[series > lower_fence & series < upper_fence, ]
+  return(filtered_data)
+}
+
+print_plot_summary <- function(x_series,
+                               x_label,
+                               num_x_outliers,
+                               y_series,
+                               y_label,
+                               num_y_outliers) {
+  print(paste('Outliers have been filtered out that lie outside of 2.5 times',
+              'the IQR from the mean (+/-).'))
+  x_outlier_msg  <- paste('Number of data considered outliers for ',
+                          x_label,
+                          ': ',
+                          num_x_outliers,
+                          sep = '')     
+  y_outlier_msg  <- paste('Additional data considered outliers for ',
+                          y_label,
+                          ': ',
+                          num_y_outliers,
+                          sep = '')  
+  print(x_outlier_msg)
+  print(y_outlier_msg)
+
+  print('---------------------------------------------------------------------')
+  print(paste('Summary statistics for', x_label, '(excluding outliers)'))
+  print(describe(x_series))
+
+  print('---------------------------------------------------------------------')
+  print(paste('Summary statistics for', y_label, '(excluding outliers)'))
+  print(describe(y_series))
+}
+
+# Wrap the bivariate scatter plots in a function. Outliers are excluded from the
+# plotted data.
 scatter_plot <- function(data, data_label, x_var, x_label, y_var, y_label) {
   x_variable <- deparse(substitute(x_var))
   y_variable <- deparse(substitute(y_var))
-  ggplot(data, aes_string(x = x_variable, y = y_variable)) +
-    ggtitle(paste(data_label, ': ', x_label, ' vs ', y_label, sep = '')) +
-    geom_point(shape = plot_point_shape, alpha = plot_point_alpha) +
-    geom_smooth()
+
+  filtered_data  <- filter_outliers_by_feature(data, x_variable)
+  num_x_outliers <- nrow(data) - nrow(filtered_data)
+  data           <- filtered_data
+
+  filtered_data  <- filter_outliers_by_feature(data, y_variable)
+  num_y_outliers <- nrow(data) - nrow(filtered_data)
+  data           <- filtered_data
+
+  p <-  ggplot(data, aes_string(x = x_variable, y = y_variable)) +
+          ggtitle(paste(data_label, ': ', x_label, ' vs ', y_label, sep = '')) +
+          geom_point(shape = plot_point_shape, alpha = plot_point_alpha) +
+          geom_smooth()
+  print(p)
+
+  x_series <- data[, x_variable]
+  y_series <- data[, y_variable]
+  print_plot_summary(x_series,
+                     x_label,
+                     num_x_outliers,
+                     y_series,
+                     y_label,
+                     num_y_outliers)
 }
 ```
 
@@ -586,20 +650,43 @@ For white wines the four strongest relationships with quality are:
 The three resulting plots are as follows:
 
 ```{r echo = FALSE}
-# Wrap the alcohol by quality multivariate scatter plots in a function.
+# Wrap the alcohol by quality multivariate scatter plots in a function. Outliers
+# are excluded from the plotted data.
 alcohol_scatter_plot_by_quality <- function(data,
                                             data_label,
                                             y_var,
                                             y_label,
                                             colour_palette) {
+  x_variable <- deparse(substitute(alcohol))
+  y_variable <- deparse(substitute(y_var))
+
+  filtered_data  <- filter_outliers_by_feature(data, x_variable)
+  num_x_outliers <- nrow(data) - nrow(filtered_data)
+  data           <- filtered_data
+
+  filtered_data  <- filter_outliers_by_feature(data, y_variable)
+  num_y_outliers <- nrow(data) - nrow(filtered_data)
+  data           <- filtered_data
+
   title <- paste(data_label, ': Alcohol vs ', y_label, ' by Quality', sep = '')
-  ggplot(data, aes_string(y = deparse(substitute(y_var)))) +
-    ggtitle(title) +
-    geom_point(shape = plot_point_shape,
-               aes(x = alcohol, colour = factor(quality))) +
-    scale_colour_brewer(palette = colour_palette) +
-    theme(panel.background  = element_rect(fill = light_grey),
-          legend.background = element_rect(fill = light_grey))
+  p <-  ggplot(data, aes_string(y = deparse(substitute(y_var)))) +
+          ggtitle(title) +
+          geom_point(shape = plot_point_shape,
+                     aes(x = alcohol, colour = factor(quality))) +
+          scale_colour_brewer(palette = colour_palette) +
+          theme(panel.background  = element_rect(fill = light_grey),
+                legend.key        = element_rect(fill = light_grey),
+                legend.background = element_rect(fill = light_grey))
+  print(p)
+
+  x_series <- data[, x_variable]
+  y_series <- data[, y_variable]
+  print_plot_summary(x_series,
+                     'Alcohol',
+                     num_x_outliers,
+                     y_series,
+                     y_label,
+                     num_y_outliers)
 }
 ```
 
@@ -611,12 +698,38 @@ alcohol_scatter_plot_by_quality(whites,
                                 white_wines_palette)
 ```
 
+Let's try plotting this slightly differently to see if breaking the quality into facets shows us anything new.
+
+```{r echo = FALSE, fig.width = 12}
+ggplot(whites, aes(x = alcohol, y = density, colour = factor(quality))) +
+  ggtitle("White Wines: Alcohol vs Density (Faceted by Quality)") +
+  geom_point(shape = plot_point_shape) +
+  scale_colour_brewer(palette = white_wines_palette) +
+  theme(panel.background  = element_rect(fill = light_grey),
+        legend.key        = element_rect(fill = light_grey),
+        legend.background = element_rect(fill = light_grey)) +
+  facet_grid(. ~ quality)
+```
+
 ```{r echo = FALSE, fig.width = 12}
 alcohol_scatter_plot_by_quality(whites,
                                 'White Wine',
                                 chlorides,
                                 'Chlorides',
                                 white_wines_palette)
+```
+
+165 outliers is quite a few. Let's take a look to see what the plot looks like when we include these outliers.
+
+```{r echo = FALSE, fig.width = 12}
+ggplot(whites, aes(y = chlorides)) +
+  ggtitle('White Wine: Alcohol vs Chlorides by Quality') +
+  geom_point(shape = plot_point_shape,
+             aes(x = alcohol, colour = factor(quality))) +
+  scale_colour_brewer(palette = white_wines_palette) +
+  theme(panel.background  = element_rect(fill = light_grey),
+        legend.key        = element_rect(fill = light_grey),
+        legend.background = element_rect(fill = light_grey))
 ```
 
 ```{r echo = FALSE, fig.width = 12}
@@ -644,6 +757,19 @@ alcohol_scatter_plot_by_quality(reds,
                                 volatile.acidity,
                                 'Volatile Acidity',
                                 red_wines_palette)
+```
+
+Let's try plotting this slightly differently to see if breaking the quality into facets shows us anything new.
+
+```{r echo = FALSE, fig.width = 12}
+ggplot(reds, aes(x = alcohol, y = volatile.acidity, colour = factor(quality))) +
+  ggtitle("Red Wines: Alcohol vs Volatile Acidity (Faceted by Quality)") +
+  geom_point(shape = plot_point_shape) +
+  scale_colour_brewer(palette = red_wines_palette) +
+  theme(panel.background  = element_rect(fill = light_grey),
+        legend.key        = element_rect(fill = light_grey),
+        legend.background = element_rect(fill = light_grey)) +
+  facet_grid(. ~ quality)
 ```
 
 ```{r echo = FALSE, fig.width = 12}
@@ -694,18 +820,19 @@ The plots for chlorides vs alcohol for white wine and sulphates vs alcohol for r
 
 ```{r echo = FALSE}
 final_plot_with_theme <- function(p) {
-  p <-  p +
+  marg <- margin(t = 10, b = 10, r = 10, l = 10)
+  p <-  p  +
           scale_colour_manual(values = wine_colours_against_black_lines,
                               name   = "Wine Colour") +
           scale_fill_manual(values = wine_colours_against_black_fills,
                             name   = "Wine Colour") +
-          theme(title            = element_text(size = 30),
-                axis.text.x      = element_text(size = 20),
-                axis.text.y      = element_text(size = 20),
-                axis.title.x     = element_text(size = 28),
-                axis.title.y     = element_text(size = 28),
-                legend.title     = element_text(size = 30),
-                legend.text      = element_text(size = 28),
+          theme(title            = element_text(size = 30, margin = marg),
+                axis.text.x      = element_text(size = 20, margin = marg),
+                axis.text.y      = element_text(size = 20, margin = marg),
+                axis.title.x     = element_text(size = 28, margin = marg),
+                axis.title.y     = element_text(size = 28, margin = marg),
+                legend.title     = element_text(size = 30, margin = marg),
+                legend.text      = element_text(size = 28, margin = marg),
                 legend.key       = element_rect(fill = black),
                 legend.key.size  = unit(3, 'lines'),
                 panel.background = element_rect(fill = black),
@@ -754,20 +881,47 @@ TODO: Write this description
 
 ### Plot Three
 ```{r echo = FALSE, fig.height = 10, fig.width = 16}
-p <-  ggplot(whites_and_reds,
+
+x_variable <- deparse(substitute(density))
+y_variable <- deparse(substitute(volatile.acidity))
+
+filtered_data  <- filter_outliers_by_feature(whites_and_reds, x_variable)
+num_x_outliers <- nrow(whites_and_reds) - nrow(filtered_data)
+data           <- filtered_data
+
+filtered_data  <- filter_outliers_by_feature(data, y_variable)
+num_y_outliers <- nrow(data) - nrow(filtered_data)
+data           <- filtered_data
+
+p <-  ggplot(data,
              aes(x     = density,
-                 y     = citric.acid,
+                 y     = volatile.acidity,
                  color = wine.colour,
-                 alpha = alcohol,
-                 size  = quality)) +
-        ggtitle("Red and White Wines: Subtly Different") +
-        geom_point(shape = 1) +
-        labs(x ="Wine Density (g / cm^3)", y = "Citric Acid (g / dm^3)")
+                 size  = alcohol)) +
+        ggtitle("Red and White Wines: Density vs Acidity (Faceted by Quality)") +
+        geom_point(shape = plot_point_shape) +
+        scale_x_continuous(breaks = c(0.99, 1.0)) +
+        labs(x = 'Wine Density (g / cm^3)', y = 'Volatile Acidity (g / dm^3)') +
+        scale_size(name = 'Alcohol\n(% by volume)') +
+        guides(size   = guide_legend(override.aes = list(colour = 'white',
+                                                         stroke = 2)),
+               colour = guide_legend(override.aes = list(size   = 10,
+                                                         stroke = 2))) +
+        facet_grid(. ~ quality) +
+        theme(strip.text.x = element_text(size = 20))
 
 final_plot_with_theme(p)
-```
 
-With this third plot, I wanted to illustrate how white wines and red wines are subtly different in their physical characteristics and how this impact their quality. The lack of clear relationships in the data made this task very difficult. The fact that the quality of white and red wines is influenced by different physical characteristics makes direct comparison quite challenging. I chose to compare the two features that influence red and white wine quality the most but only apply to one type of wine or the other. As we discovered earlier, the quality for both types of wine is most influenced by the quantity of alcohol in them. The next most influential feature for white wine is density and for red wine, it is citric acid.
+# Uncomment to print the number of outliers
+# print(paste('Num outliers for density:', num_x_outliers))
+# print(paste('Num outliers for volatile.acidity:', num_y_outliers))
+```
+**NB** This plot excludes outliers that fall outside 2.5 times the interquartile range from the mean (+/-). This has excluded 2 outliers for wine density and 153 outliers for volatile acidity. The plots are clearer without these outliers and the general trend of the plot is unaffected.
+
+TODO: Rewrite this
+
+
+With this third plot, I wanted to illustrate how white wines and red wines are subtly different in their physical characteristics and how this impacts their quality. The lack of clear relationships in the data made this task very difficult. The fact that the quality of white and red wines is influenced by different physical characteristics makes direct comparison quite challenging. I chose to compare the two features that influence red and white wine quality the most but only apply to one type of wine or the other. As we discovered earlier, the quality for both types of wine is most influenced by the quantity of alcohol in them. The next most influential feature for white wine is density and for red wine, it is citric acid.
 
 I tried to layer alcohol and quality information into the plot by using those values to control the alpha and size of the points. Though this information isn't clear for the points in the central cluster, it is possible to discern these details for points at the periphery, so I chose to keep the information as a part of the plot.
 

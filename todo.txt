@@ -1,7 +1,5 @@
 TODO:
 
-- Handle outliers more deliberately and discuss my reasoning.
-- Consider using upper and lower fences (1.5 * IQR) to exclude outliers from the plots.
 - Extend the comments between plots (instead of just presenting the correlation scores).
     Please also include at least some description of the nature of the correlations. There are two type of comments that need be added to each plot:
 
@@ -9,7 +7,3 @@ TODO:
     - Comments following that plot reflecting its contents. You can also include what your thoughts are after reading the plot i.e. how did the knowledge from that plot change the course of your analysis?
 
     On a similar note, I See that Analysis part of each section (Univariate, Bivariate, and Multivariate) does explain some plots but these sections are not the right place to describe individual plots. Instead, please add comments right after and/or before the (important) plots as well and use Analysis sections to conclude your analysis.
-
-- 'Fix' the third final plot to show fewer attributes and make sure 'alcohol' has a unit in the legend.
-
-- More than 20 visualizations are provided, and some statistics and model building have been calculated and presented. Currently, all summary statistics are grouped on top of the report, that is enough to pass this specification, but it is a good idea to have them right after relevant plots and discussions to make them more readable.

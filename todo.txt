@@ -1,9 +1,0 @@
-TODO:
-
-- Extend the comments between plots (instead of just presenting the correlation scores).
-    Please also include at least some description of the nature of the correlations. There are two type of comments that need be added to each plot:
-
-    - Reasoning behind the creation of that plot.
-    - Comments following that plot reflecting its contents. You can also include what your thoughts are after reading the plot i.e. how did the knowledge from that plot change the course of your analysis?
-
-    On a similar note, I See that Analysis part of each section (Univariate, Bivariate, and Multivariate) does explain some plots but these sections are not the right place to describe individual plots. Instead, please add comments right after and/or before the (important) plots as well and use Analysis sections to conclude your analysis.

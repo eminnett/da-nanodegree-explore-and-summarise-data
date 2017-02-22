@@ -3,7 +3,7 @@
 #### Data Analyst Nanodegree (Udacity)
 Project submission by Edward Minnett (ed@methodic.io).
 
-February 20th 2017 (Revision 2)
+February 22nd 2017 (Revision 3)
 
 -------
 
@@ -22,6 +22,7 @@ $ curl https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-down
 $ R
 R > $ install.packages('rmarkdown')
 R > $ install.packages('corrplot')
+R > $ install.packages('gridExtra')
 R > $ library(rmarkdown)
 R > $ rmarkdown::render("wine_data_analysis.rmd")
 ```

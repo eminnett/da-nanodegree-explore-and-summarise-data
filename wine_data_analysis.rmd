@@ -3,7 +3,7 @@
 #### Data Analyst Nanodegree (Udacity)
 Project submission by Edward Minnett (ed@methodic.io).
 
-February 20th 2017 (Revision 2)
+February 22nd 2017 (Revision 3)
 
 -------
 
@@ -20,12 +20,13 @@ library(reshape2)
 library(ggplot2)
 library(GGally)
 library(corrplot)
+require(gridExtra)
 ```
 
 ```{r echo = FALSE, Load_the_Data}
 # Load the Data
 whites <- read.csv('wineQualityWhites.csv')
-reds   <- read.csv('wineQualityreds.csv')
+reds   <- read.csv('wineQualityReds.csv')
 # The 'X' column of the data is simply an incremental index and is not needed.
 whites <- subset(whites, select = -c(X))
 reds   <- subset(reds, select = -c(X))
@@ -37,6 +38,13 @@ reds   <- reds[complete.cases(reds),]
 # Correlation Matrices
 white.corr <- cor(whites)
 red.corr   <- cor(reds)
+
+# Combine the two data sets into one to make direct comparison easier
+w <- cbind(whites)
+r <- cbind(reds)
+w$wine.colour   <- 'White'
+r$wine.colour   <- 'Red'
+whites.and.reds <- rbind(w, r)
 
 
 # Useful settings
@@ -56,7 +64,54 @@ wine.colours.against.black.lines <- c("maroon", "white")
 wine.colours.against.black.fills <- c("red4", "lemonchiffon1")
 white.wines.palette <- "Blues"
 red.wines.palette   <- "Reds"
+
+# Return the given data frame without data that fall outside 2 times the IQR
+# from the median (+/-) for the given feature. If a different
+# threshold.distance is used instead of 2, more or fewer of the outliers can
+# be excluded from the filtered data.
+# It returns the filtered data frame.
+FilterOutliersByFeature <- function(df, feature, threshold.distance = 2) {
+  series <- df[, feature]
+  iqr    <- IQR(series)
+  median <- median(series)
+  lower.fence   <- median - threshold.distance * iqr
+  upper.fence   <- median + threshold.distance * iqr
+  filtered.data <- df[series > lower.fence & series < upper.fence, ]
+  return(filtered.data)
+}
+
+PrintPlotSummary <- function(x.series,
+                             x.label,
+                             num.x.outliers,
+                             y.series,
+                             y.label,
+                             num.y.outliers) {
+  print(paste('Outliers have been filtered out that lie outside of 2 times',
+              'the IQR from the median (+/-).'))
+  x.outlier.msg  <- paste('Number of data considered outliers for ',
+                          x.label,
+                          ': ',
+                          num.x.outliers,
+                          sep = '')     
+  y.outlier.msg  <- paste('Additional data considered outliers for ',
+                          y.label,
+                          ': ',
+                          num.y.outliers,
+                          sep = '')  
+  print(x.outlier.msg)
+  print(y.outlier.msg)
+
+  print('---------------------------------------------------------------------')
+  print(paste('Summary statistics for', x.label, '(excluding outliers)'))
+  print(describe(x.series))
+
+  print('---------------------------------------------------------------------')
+  print(paste('Summary statistics for', y.label, '(excluding outliers)'))
+  print(describe(y.series))
+}
 ```
+
+
 
 # Data Source
 
@@ -78,6 +133,18 @@ Available at:
 - [bib] http://www3.dsi.uminho.pt/pcortez/dss09.bib
 
 A more detailed description of the data set can be found in the `README.md` file that accompanies this report.
+
+# Objectives for this exploration
+
+There are three objectives for this exploration.
+
+The first is to try and understand the physical characteristics of white and red wine and the distribution of these characteristics within a sample of wines of each colour.
+
+The second is to see how white and red wines differ in terms of their physical characteristics.
+
+The third is to explore the similarities and differences between the impact of the physical characteristics on the perceived quality of white and red wines.
+
+These objectives will be explored progressively as we explore the data. The univariate exploration will focus on the first objective where we will explore each feature of the data set in isolation. The bivariate exploration is where we will begin to explore the relationships and interplay between the physical characteristics of the two types of wine. The multivariate exploration will focus more on the third objective where we will consider the impact of different physical characteristics on the quality of the wines. It is worth noting that the second and third objectives will be discussed in both the bivariate and multivariate sections though focus of each will differ.
 
 # Univariate Plots Section
 
@@ -144,16 +211,49 @@ whites <- whites[-outlier_indices,]
 
 ### White Wines
 
-Now let's take a look at the general distribution for each of the white wine features. As this is the first time we are looking at each of these distributions, there isn't a specific justification for each plot apart from the fact that we want to see how that feature is distributed. For these plots, we will include the outliers as it is important to understand how they affect the distributions before they are removed.
+Now let's take a look at the general distribution for each of the white wine features. As this is the first time we are looking at each of these distributions, there isn't a specific justification for each plot apart from the fact that we want to see how that feature is distributed. For these plots, we will include the outliers for one plot and then exclude them in a second plot side by side. It is important to understand how the outliers affect the distributions and not simply remove remove them and pretend they aren't there.
 
 ```{r echo = FALSE}
-# Wrap the bivariate scatter plots in a function.
+# Wrap the histogram plots in a function.
 UnivariateSummary <- function(data, data.label, x.var, x.label) {
   x.variable <- deparse(substitute(x.var))
 
-  plot <- ggplot(data, aes_string(x = x.variable)) +
+  filtered.data  <- FilterOutliersByFeature(data, x.variable)
+  num.x.outliers <- nrow(data) - nrow(filtered.data)
+
+  plot1 <- ggplot(data, aes_string(x = x.variable)) +
             ggtitle(paste(data.label, ': ', x.label, ' Histogram', sep = '')) +
             geom_histogram(bins = 30) +
+            theme_bw()
+
+  plot2 <- ggplot(filtered.data, aes_string(x = x.variable)) +
+            ggtitle('And without outliers') +
+            geom_histogram(bins = 30) +
+            theme_bw()
+
+  print(grid.arrange(plot1, plot2, ncol=2))
+
+  series <- data[, x.variable]
+
+  print(paste('Summary statistics for ', data.label, ': ', x.label, sep = ''))
+  print(describe(series))
+
+  print(paste('Quantiles for ', data.label, ': ', x.label, sep = ''))
+  print(quantile(series))
+
+  print(paste('Interquartile Range for ', data.label, ': ', x.label, sep = ''))
+  print(IQR(series))
+
+  print(paste('Outliers excluded for ', data.label, ': ', x.label, sep = ''))
+  print(num.x.outliers)
+}
+
+QualitySummary <- function(data, data.label, x.var, x.label) {
+  x.variable <- deparse(substitute(x.var))
+
+  plot <- ggplot(data, aes_string(x = x.variable)) +
+            ggtitle(paste(data.label, ': ', x.label, ' Bar Plot', sep = '')) +
+            geom_bar() +
             theme_bw()
 
   print(plot)
@@ -243,21 +343,10 @@ UnivariateSummary(whites, 'White Wine', alcohol, 'Alcohol')
 Alcohol for white wine is very broadly distributed with its range. It isn't quite uniformly distributed as there are more data that have lower values for alcohol than higher and there is a peak around the first quartile, but the distribution to the right of the peak falls off far more gradually than it does to the left.
 
 ```{r echo = FALSE, fig.width = 10, fig.height = 6, message = FALSE}
-UnivariateSummary(whites, 'White Wine', quality, 'Quality')
+QualitySummary(whites, 'White Wine', quality, 'Quality')
 ```
 
 This is the first distribution we have seen that shows discrete values with a very small number of different values. The quality for white wine is represented by an integer and only takes the values between 3 and 9 inclusive. Even though the values are so discrete, the distribution is quite symmetrical with the mean very close to the median.
-
-Let's also take a look at the kernel density estimate for the quality feature.
-
-```{r echo = FALSE, fig.width = 10, fig.height = 6, message = FALSE}
-ggplot(whites, aes(x = quality)) +
-  ggtitle("White Wine Quality KDE") +
-  geom_density() +
-  theme_bw()
-```
-
-Even though this plot is very similar to the histogram, the fact that the scale is normalised will allow us to more directly compare it with the same plot for red wine.
 
 ### Red Wines
 
@@ -294,7 +383,7 @@ It appears that citric acid for red wine is somewhat uniformly distributed with 
 UnivariateSummary(reds, 'Red Wine', residual.sugar, 'Residual Sugar')
 ```
 
-Residual sugar for red wine has a very narrow peak below the mean and a very long right-hand tail with many outliers beyond the right-hand tail.
+Residual sugar for red wine has a very narrow peak below the mean and a very long right-hand tail with many outliers beyond the right-hand tail. By looking at the histogram without the outliers, we can see that there is one bin very close to the peak with very little data. Rather than this suggesting an odd relationship that actually exists in the residual sugar for red wine, I think it is more likely that some of the data was rounded to a nearby value when the data was recorded. This is purely speculation, but it would explain why there is so little data in just that one bin of the histogram.
 
 
 ```{r echo = FALSE, fig.width = 10, fig.height = 6, message = FALSE}
@@ -347,21 +436,10 @@ UnivariateSummary(reds, 'Red Wine', alcohol, 'Alcohol')
 Alcohol for red wine is very skewed to the right with a peak near the first quartile. It isn't quite as uniformly distributed as the distribution for alcohol for white wine, but its right-hand tail is still quite gradual with an outlier beyond the end of the right-hand tail.
 
 ```{r echo = FALSE, fig.width = 10, fig.height = 6, message = FALSE}
-UnivariateSummary(reds, 'Red Wine', quality, 'Quality')
+QualitySummary(reds, 'Red Wine', quality, 'Quality')
 ```
 
 Like the quality distribution for white wine, this is the only distribution we have seen for red wine that shows discrete values with a very small number of different values. The quality for red wine is represented by an integer and only takes the values between 3 and 8 inclusive (one fewer values than white wine). Even though the values are so discrete, the distribution is quite symmetrical with the mean almost half way between the two middle values. There are more data that have higher quality scores than lower.
-
-Let's also take a look at the kernel density estimate for the quality feature.
-
-```{r echo = FALSE, fig.width = 10, fig.height = 6, message = FALSE}
-ggplot(reds, aes(x = quality)) +
-  ggtitle("Red Wine Quality KDE") +
-  geom_density() +
-  theme_bw()
-```
-
-Even though this plot is very similar to the histogram, the fact that the scale is normalised will allow us to more directly compare it with the same plot for white wine. Though the distribution for both is quite symmetrical, the distribution for red wine is a bit broader peak than that for white wine.
 
 # Univariate Analysis
 
@@ -409,7 +487,17 @@ Of all 24 distributions the citric acid observations for red wine required furth
 
 # Bivariate Plots Section
 
-To begin the bivariate analysis of each type of wine, let's take a look at the correlations for each of the features. It will be useful to know which pair pf features have the strongest correlations and which features are most strongly correlated with the quality feature.
+To begin the bivariate analysis of each type of wine, let's take a closer look at the quality distributions for the two types of wine and do a side by side comparison. As the bar plots for the two types of wine differ dramatically in terms of the counts for each quality score (simply because the number of data is imbalanced) we need an alternate way to directly compare the plots. An easy way to do this is to take the kernel density estimate for the two plots and compare them directly.
+
+```{r echo = FALSE, fig.width = 10, fig.height = 6, message = FALSE}
+ggplot(whites.and.reds, aes(x = quality, colour = wine.colour)) +
+  ggtitle("Wine Quality KDE") +
+  geom_density()
+```
+
+This makes it very clear where the quality distributions for each type of wine are similar and how they are different. From this plot, we can clearly see that white wines are more likely to receive a score of 6 or higher than reds. White wines are also more likely to receive a very high score where reds are far more likely to receive a score between 5 and 7 with many more receiving 5 than 7. It is hard to see in this plot as the number of wines receiving a score of 9 is very small, but all the wines receiving a quality score of 9 are white wines.
+
+It will be useful to know which pairs of features have the strongest correlations and which features are most strongly correlated with the quality feature.
 
 ### Correlations
 
@@ -447,51 +535,6 @@ Now we have isolated the features that have the strongest relationships with eac
 
 ### White Wines
 ```{r echo = FALSE}
-# Return the given data frame without data that fall outside 2 times the IQR
-# from the median (+/-) for the given feature. If a different
-# threshold.distance is used instead of 2, more or fewer of the outliers can
-# be excluded from the filtered data.
-# It returns the filtered data frame.
-FilterOutliersByFeature <- function(df, feature, threshold.distance = 2) {
-  series <- df[, feature]
-  iqr    <- IQR(series)
-  median <- median(series)
-  lower.fence   <- median - threshold.distance * iqr
-  upper.fence   <- median + threshold.distance * iqr
-  filtered.data <- df[series > lower.fence & series < upper.fence, ]
-  return(filtered.data)
-}
-
-PrintPlotSummary <- function(x.series,
-                             x.label,
-                             num.x.outliers,
-                             y.series,
-                             y.label,
-                             num.y.outliers) {
-  print(paste('Outliers have been filtered out that lie outside of 2 times',
-              'the IQR from the median (+/-).'))
-  x.outlier.msg  <- paste('Number of data considered outliers for ',
-                          x.label,
-                          ': ',
-                          num.x.outliers,
-                          sep = '')     
-  y.outlier.msg  <- paste('Additional data considered outliers for ',
-                          y.label,
-                          ': ',
-                          num.y.outliers,
-                          sep = '')  
-  print(x.outlier.msg)
-  print(y.outlier.msg)
-
-  print('---------------------------------------------------------------------')
-  print(paste('Summary statistics for', x.label, '(excluding outliers)'))
-  print(describe(x.series))
-
-  print('---------------------------------------------------------------------')
-  print(paste('Summary statistics for', y.label, '(excluding outliers)'))
-  print(describe(y.series))
-}
-
 # Wrap the bivariate scatter plots in a function. Outliers are excluded from the
 # plotted data.
 ScatterPlot <- function(data, data.label, x.var, x.label, y.var, y.label) {
@@ -699,6 +742,19 @@ ggplot(reds, aes(x = factor(quality), y = alcohol)) +
 
 The relationship between alcohol and quality for red wine is very similar to that of white wine following almost the same trends. The main difference, as has been noted previously, is that there are wines with a quality score of 9 for white wines but none for red wines.
 
+We will be able to see how white and red wine quality relates to alcohol more clearly of we look at these plots side by side.
+
+```{r echo = FALSE, fig.width = 12}
+ggplot(whites.and.reds,
+       aes(x      = factor(quality),
+           y      = alcohol,
+           colour = wine.colour)) +
+  ggtitle("White and Red Wine: Quality vs Alcohol") +
+  geom_boxplot()
+```
+
+Even though there is a positive correlation between alcohol content and wine quality, this relationship only affects wines with a quality score greater than or equal to 5. For wines that received a quality score less than or equal to 5, the relationship is less clear. For white wines, there appears to be a negative relationship between alcohol and quality, but there is a lot of overlap of the interquartile range for these three box plots. The trend for these lowest three quality levels for red wine is even flatter than it is for white wine. The box plots help make it very clear that only white wines received a quality score of 9.
+
 # Bivariate Analysis
 
 ### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
@@ -756,7 +812,7 @@ AlcoholScatterPlotByQuality <- function(data,
   title <- paste(data.label, ': Alcohol vs ', y.label, ' by Quality', sep = '')
   p <-  ggplot(data, aes_string(y = deparse(substitute(y.var)))) +
           ggtitle(title) +
-          geom_point(shape = plot.point.shape,
+          geom_point(alpha = 0.7,
                      aes(x = alcohol, colour = factor(quality))) +
           scale_colour_brewer(palette = colour.palette) +
           theme(panel.background  = element_rect(fill = light.grey),
@@ -798,7 +854,7 @@ filtered.data <- FilterOutliersByFeature(filtered.data, y.variable)
 
 ggplot(filtered.data, aes(x = alcohol, y = density, colour = factor(quality))) +
   ggtitle("White Wines: Alcohol vs Density (Faceted by Quality)") +
-  geom_point(shape = plot.point.shape) +
+  geom_point(alpha = 0.7) +
   scale_colour_brewer(palette = white.wines.palette) +
   theme(panel.background  = element_rect(fill = light.grey),
         legend.key        = element_rect(fill = light.grey),
@@ -825,7 +881,7 @@ This plot is quite broadly scattered and the relationship between chlorides and 
 ```{r echo = FALSE, fig.width = 12}
 ggplot(whites, aes(x = alcohol, y = chlorides, colour = factor(quality))) +
   ggtitle('White Wine: Alcohol vs Chlorides by Quality') +
-  geom_point(shape = plot.point.shape) +
+  geom_point(alpha = 0.7) +
   scale_colour_brewer(palette = white.wines.palette) +
   theme(panel.background  = element_rect(fill = light.grey),
         legend.key        = element_rect(fill = light.grey),
@@ -882,7 +938,7 @@ ggplot(filtered.data, aes(x = alcohol,
                           y = volatile.acidity,
                           colour = factor(quality))) +
   ggtitle("Red Wines: Alcohol vs Volatile Acidity (Faceted by Quality)") +
-  geom_point(shape = plot.point.shape) +
+  geom_point(alpha = 0.7) +
   scale_colour_brewer(palette = red.wines.palette) +
   theme(panel.background  = element_rect(fill = light.grey),
         legend.key        = element_rect(fill = light.grey),
@@ -917,6 +973,45 @@ AlcoholScatterPlotByQuality(reds,
 This plot for citric acid vs alcohol by quality is very similar to the previous plot for sulphates. The relationship between alcohol and quality is much more discernible than the relationship between citric acid and quality. This plot excludes 17 outliers for alcohol and 1 outlier for citric acid.
 
 Of all these plots, the plot of the relationship between citric acid and alcohol for red wines is the most spread out. Citric acid is most evenly distributed for wines with lower levels of alcohol whereas higher alcohol wines tend to have citric acid levels below 0.125 or between 0.3 and 0.7 g / dm^3.
+
+For one last plot, let's compare how density and volatile acidity affect white and red wines differently and break down that relationship by the quality scores. This is in effect a combination of the two faceted plots we have looked at in this section.
+
+```{r echo = FALSE, fig.width = 12}
+x.variable <- deparse(substitute(density))
+y.variable <- deparse(substitute(volatile.acidity))
+
+filtered.data  <- FilterOutliersByFeature(whites.and.reds, x.variable)
+num.x.outliers <- nrow(whites.and.reds) - nrow(filtered.data)
+data           <- filtered.data
+
+filtered.data  <- FilterOutliersByFeature(data, y.variable)
+num.y.outliers <- nrow(data) - nrow(filtered.data)
+data           <- filtered.data
+
+title <- 'Red and White Wines: Density vs Acidity (Faceted by Quality)'
+ggplot(data,
+       aes(x     = density,
+           y     = volatile.acidity,
+           color = wine.colour)) +
+  ggtitle(title) +
+  geom_point(shape = plot.point.shape) +
+  scale_x_continuous(breaks = c(0.99, 1.0)) +
+  facet_grid(. ~ quality)
+
+print(paste('Outliers have been filtered out that lie outside of 2 times',
+            'the IQR from the median (+/-).'))
+x.outlier.msg  <- paste('Number of data considered outliers for Density: ',
+                        num.x.outliers,
+                        sep = '')     
+y.outlier.msg  <- paste('Additional data considered outliers for ',
+                        'Volatile Acidity: ',
+                        num.y.outliers,
+                        sep = '')  
+print(x.outlier.msg)
+print(y.outlier.msg)
+```
+
+The plot shows that red wine tends to have both a higher density and greater quantity of volatile acidity than white wine. As the quality of a wine increases, the volatile acidity decreases. The change in volatile acidity for red wine as quality increases is more pronounced than it is for white wine. The density of white wine also decreases as quality increases while the density for red wine is pretty consistent across the quality facets.
 
 # Multivariate Analysis
 
@@ -963,9 +1058,6 @@ FinalPlotWithTheme <- function(p) {
 ### Plot One
 ```{r echo = FALSE, fig.height = 10, fig.width = 16}
 # probability distribution of quality for white and red wines  
-whites$wine.colour <- 'White'
-reds$wine.colour   <- 'Red'
-whites.and.reds    <- rbind(whites, reds)
 p <-  ggplot(whites.and.reds,
              aes(x      = quality,
                  fill   = wine.colour,
@@ -1023,16 +1115,12 @@ title <- 'Red and White Wines: Density vs Acidity (Faceted by Quality)'
 p <-  ggplot(data,
              aes(x     = density,
                  y     = volatile.acidity,
-                 color = wine.colour,
-                 size  = alcohol)) +
+                 color = wine.colour)) +
         ggtitle(title) +
-        geom_point(shape = plot.point.shape) +
+        geom_point(shape = plot.point.shape, size = 3) +
         scale_x_continuous(breaks = c(0.99, 1.0)) +
         labs(x = 'Wine Density (g / cm^3)', y = 'Volatile Acidity (g / dm^3)') +
-        scale_size(name = 'Alcohol\n(% by volume)') +
-        guides(size   = guide_legend(override.aes = list(colour = 'white',
-                                                         stroke = 2)),
-               colour = guide_legend(override.aes = list(size   = 10,
+        guides(colour = guide_legend(override.aes = list(size   = 10,
                                                          stroke = 2))) +
         facet_grid(. ~ quality) +
         theme(strip.text.x = element_text(size = 20))
